@@ -1,6 +1,6 @@
-
 import streamlit as st
 import pandas as pd
+import joblib
 import pickle
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
@@ -11,8 +11,7 @@ import base64
 import io
 
 # --- モデルとラベルエンコーダを読み込む ---
-with open("rf_model.pkl", "rb") as f:
-    model = pickle.load(f)
+model = joblib.load("rf_model.joblib")
 
 with open("label_encoder.pkl", "rb") as f:
     le = pickle.load(f)
