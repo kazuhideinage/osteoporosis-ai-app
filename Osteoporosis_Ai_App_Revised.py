@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -71,10 +72,19 @@ if uploaded_file is not None:
         st.subheader("🧠 推奨根拠（SHAPによる説明）")
         explainer = shap.TreeExplainer(model)
         shap_values = explainer.shap_values(input_data)
+
+        # SHAPの出力形式に対応
+        if isinstance(shap_values, list):  # 多クラス分類
+            sv = shap_values[top_index][0]
+            base_val = explainer.expected_value[top_index]
+        else:  # 単クラス or 2クラス分類
+            sv = shap_values[0]
+            base_val = explainer.expected_value
+
         fig, ax = plt.subplots(figsize=(8, 4))
         shap.waterfall_plot(shap.Explanation(
-            values=shap_values[top_index][0],
-            base_values=explainer.expected_value[top_index],
+            values=sv,
+            base_values=base_val,
             data=input_data.iloc[0],
             feature_names=input_data.columns.tolist()
         ), max_display=10, show=False)
