@@ -29,11 +29,9 @@ if uploaded_file is not None:
     ca = st.number_input("Ca値 (mg/dL)", min_value=6.0, max_value=12.0, value=9.5)
     alb = st.number_input("Alb値 (g/dL)", min_value=2.0, max_value=5.0, value=4.0)
 
-    # 学習用カラムと目的変数
     features = ["年齢", "投与前 腰椎 YAM値(%)", "投与前 Tracp 5b値(mU/dL)", "投与前 eGFR値(mL/min)", "投与前 Ca値(mg/dl)", "投与前 ALB値(g/dl)"]
     target = "使用骨粗鬆症薬名①(メイン)"
 
-    # 数値化＋欠損除去
     for col in features:
         df[col] = pd.to_numeric(df[col], errors="coerce")
     df = df.dropna(subset=features + [target])
@@ -64,22 +62,17 @@ if uploaded_file is not None:
         top_index = np.argmax(proba)
         top_drug = class_names[top_index]
 
-        st.success(f"\n✅ 推奨薬剤：**{top_drug}**（確率：{proba[top_index]*100:.1f}%）")
+        st.success(f"✅ 推奨薬剤：**{top_drug}**（確率：{proba[top_index]*100:.1f}%）")
 
         st.subheader("📊 推奨確率（全薬剤）")
         prob_df = pd.DataFrame({"薬剤": class_names, "確率（%）": proba * 100})
         st.table(prob_df.sort_values(by="確率（%）", ascending=False).reset_index(drop=True))
 
         st.subheader("🧠 推奨根拠（SHAPによる説明）")
-        explainer = shap.TreeExplainer(model)
-        shap_values = explainer.shap_values(input_data)
-
+        explainer = shap.Explainer(model, X)
+        shap_values = explainer(input_data)
         fig, ax = plt.subplots(figsize=(8, 4))
-        shap.waterfall_plot(shap.Explanation(values=shap_values[top_index][0], 
-                                              base_values=explainer.expected_value[top_index],
-                                              data=input_data.iloc[0],
-                                              feature_names=input_data.columns.tolist()),
-                            max_display=10, show=False)
+        shap.plots.waterfall(shap_values[0], max_display=10, show=False)
         st.pyplot(fig)
 
         st.subheader("📄 レポート出力 (PDF)")
