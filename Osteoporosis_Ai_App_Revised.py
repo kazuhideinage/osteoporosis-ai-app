@@ -69,10 +69,15 @@ if uploaded_file is not None:
         st.table(prob_df.sort_values(by="確率（%）", ascending=False).reset_index(drop=True))
 
         st.subheader("🧠 推奨根拠（SHAPによる説明）")
-        explainer = shap.Explainer(model, X)
-        shap_values = explainer(input_data)
+        explainer = shap.TreeExplainer(model)
+        shap_values = explainer.shap_values(input_data)
         fig, ax = plt.subplots(figsize=(8, 4))
-        shap.plots.waterfall(shap_values[0], max_display=10, show=False)
+        shap.waterfall_plot(shap.Explanation(
+            values=shap_values[top_index][0],
+            base_values=explainer.expected_value[top_index],
+            data=input_data.iloc[0],
+            feature_names=input_data.columns.tolist()
+        ), max_display=10, show=False)
         st.pyplot(fig)
 
         st.subheader("📄 レポート出力 (PDF)")
